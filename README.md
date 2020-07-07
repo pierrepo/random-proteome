@@ -1,2 +1,4 @@
 # random-proteome
-Build a random proteome from tempalte
+
+Build a random proteome from template.
+
