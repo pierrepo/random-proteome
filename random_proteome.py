@@ -48,18 +48,17 @@ def read_template_proteome(fasta_filename):
     Returns
     -------
     list
-        List of proteins name in order of appearance in the fasta file.
-    dict
-        Dictionnary with protein names as keys and protein sequences as keys.
+        List of protein names in order of appearance in the fasta file.
+    list
+        List of protein sequences in order of appearance in the fasta file.
     """
-    proteins = []
-    proteome = {}
+    protein_names = []
+    protein_sequences = []
     with open(fasta_filename, "r") as proteome_file:
         for record in SeqIO.parse(proteome_file, "fasta"):
-            name = record.id
-            proteins.append(name)
-            proteome[name] = str(record.seq)
-    return proteins, proteome
+            protein_names.append(record.id)
+            protein_sequences.append(str(record.seq))
+    return protein_names, protein_sequences
 
 
 def count_amino_acids(sequence, amino_acid_lst):
@@ -95,14 +94,14 @@ def add_dictionnaries(dict_1, dict_2):
     return dict_sum
 
 
-def calculate_amino_acid_proportion(amino_acid_dct):
+def calculate_amino_acid_proportion(sequence, amino_acid_lst):
     """
     Calculate proportion of amino acids.
 
     Parameters
     ----------
-    amino_acid_dct : dict
-        Dictionnary with amino acid as key and count as value.
+    amino_acid_lst : list
+        List of amino acids to consider.
 
     Returns
     -------
@@ -110,33 +109,74 @@ def calculate_amino_acid_proportion(amino_acid_dct):
         Dictionnary with amino acid as key and proportion as value.
     """
     amino_acid_prop = {}
-    total = sum(amino_acid_dct.values())
-    for amino_acid in amino_acid_dct:
-        amino_acid_prop[amino_acid] = amino_acid_dct[amino_acid] / total
+    for amino_acid in amino_acid_lst:
+        amino_acid_prop[amino_acid] = sequence.count(amino_acid) / len(sequence)
     return amino_acid_prop
+
+
+def shuffle_sequence(sequence):
+    """Shuffle sequence.
     
-
-
-def create_random_protein(length, amino_acid_lst, amino_acid_dct,
-                          start_with_methionine=True,  
-                          amino_acid_bias=None):
+    Parameters
+    ----------
+    sequence : str
+        Sequence to shuffle.
+    
+    Returns
+    -------
+    str
+        Shuffled sequence.
     """
+    shuffled_sequence = list(sequence)
+    random.shuffle(shuffled_sequence)
+    return "".join(shuffled_sequence)
+
+
+def create_random_protein_from_proteome(proteome_sequence, length):
+    """Create random protein from a random proteome.
+    
+    Parameters
+    ----------
+    proteome_sequence : str
+        Complete sequence of the entire proteome.
+    length : int
+        Lenght of the target protein.
+    
+    Returns
+    -------
+    str
+        Produced protein sequence.
+    str
+        Remaining proteome sequence.
+    """
+    protein_sequence = proteome_sequence[0:length]
+    proteome_sequence = proteome_sequence[length:]
+    return protein_sequence, proteome_sequence
+
+
+def create_random_protein_from_distribution(length, amino_acid_lst, amino_acid_distribution=None):
+    """Create random protein from distribution.
 
     https://docs.python.org/3/library/random.html#random.choices
+    
+    Parameters
+    ----------
+    lenght : int
+        Lenght of the target protein.
+    amino_acid_lst : list
+        List of amino acids to consider.
+    amino_acid_distribution : list
+        List of amino acids distribution.
+        
+    Returns
+    -------
+    str
+        Produced protein sequence.
     """
-    sequence = ""
-    while len(sequence) != length:
-        if (start_with_methionine == True 
-            and sequence == "" 
-            and amino_acid_dct["M"] > 0):
-            amino_acid = "M"
-        else:
-            amino_acid = random.choices(amino_acid_lst, 
-                                        weights=amino_acid_bias)[0]
-        if amino_acid_dct[amino_acid] > 0:
-            sequence += amino_acid
-            amino_acid_dct[amino_acid] -= 1
-    return sequence, amino_acid_dct
+    sequence = random.choices(amino_acid_lst, 
+                              weights=amino_acid_distribution,
+                              k=length)
+    return "".join(sequence)
     
 
 if "__name__" == "__main__":
