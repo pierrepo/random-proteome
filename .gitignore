@@ -1,6 +1,10 @@
 # Fasta files
 *.fasta
 
+# result files
+*.tsv
+*.png
+
 # Jupyter checkpoints
 .ipynb_checkpoints
 
