@@ -6,8 +6,9 @@ import random
 import sys
 
 from Bio import SeqIO
+import pandas as pd
 
-
+random.seed(42)
 AMINO_ACID_LST = list("ACDEFGHIKLMNPQRSTVWY")
 
 
@@ -94,7 +95,7 @@ def add_dictionnaries(dict_1, dict_2):
     return dict_sum
 
 
-def calculate_amino_acid_proportion(sequence, amino_acid_lst):
+def get_amino_acid_proportion(sequence, amino_acid_lst):
     """
     Calculate proportion of amino acids.
 
@@ -177,7 +178,50 @@ def create_random_protein_from_distribution(length, amino_acid_lst, amino_acid_d
                               weights=amino_acid_distribution,
                               k=length)
     return "".join(sequence)
-    
+
+
+def write_fasta(protein_lst, fasta_filename, width=60):
+    """Write sequence as fasta file.
+
+    Parameters
+    ----------
+    protein_lst : list
+        List of proteins.
+    fasta_filename : str
+        Name of output fasta file.
+    width : int, optional
+        Width of sequence line in fasta format.
+    """
+    with open(fasta_filename, "w") as fasta_file:
+        for prot_idx, prot_seq in enumerate(protein_lst):
+            size = len(prot_seq)
+            # Protein index starts at 1 in the description line.
+            fasta_file.write(f">protein: {prot_idx+1} | size: {size}\n")
+            for i in range(0, len(prot_seq), width):
+                fasta_file.write(f"{prot_seq[i: i+width]}\n")
+
+
+def write_distribution(protein_lst, amino_acid_lst, filename, ref_distribution=None):
+    """Write amino acid distribution of proteins.
+
+    Parameters
+    ----------
+    protein_lst : list
+        List of proteins.
+    amino_acid_lst : list
+        List of reference amino acids.
+    filename : str
+        Name of output file in .tsv format.
+    ref_distribution : dict, optional
+        Dictionnary with amino acid ditribution of the reference proteome.
+    """
+    df  = pd.DataFrame(columns=amino_acid_lst)
+    if ref_distribution:
+        df = df.append(pd.Series(ref_distribution, name=0))
+    for prot_index, prot_sequence in enumerate(protein_lst):
+        proportion = get_amino_acid_proportion(prot_sequence, amino_acid_lst)
+        df = df.append(pd.Series(proportion, name=prot_index+1))
+    df.to_csv(filename, sep="\t", index_label="prot_id")
 
 if "__name__" == "__main__":
     inputs = cli()
