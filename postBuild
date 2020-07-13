@@ -1,0 +1,8 @@
+# ipywidgets: JupyterLab Extension
+# https://ipywidgets.readthedocs.io/en/latest/user_install.html
+jupyter labextension install @jupyter-widgets/jupyterlab-manager
+
+
+# Voilà: JupyterLab preview extension
+# https://github.com/voila-dashboards/voila
+jupyter labextension install @jupyter-voila/jupyterlab-preview

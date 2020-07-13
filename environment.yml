@@ -12,3 +12,6 @@ dependencies:
   - matplotlib
   - pandas
   - biopython
+  - nodejs
+  - ipywidgets
+  - voila
