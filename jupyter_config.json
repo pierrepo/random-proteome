@@ -1,6 +1,0 @@
-{
-    "VoilaConfiguration": {
-      "file_whitelist": "['random_proteome.fasta', 'random_proteome.tsv']"
-    }
-}
-  
