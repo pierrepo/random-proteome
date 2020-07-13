@@ -6,10 +6,11 @@ import random
 import sys
 
 from Bio import SeqIO
+import numpy as np
 import pandas as pd
 
 random.seed(42)
-AMINO_ACID_LST = list("ACDEFGHIKLMNPQRSTVWY")
+AMINO_ACID_LST = tuple("ACDEFGHIKLMNPQRSTVWY")
 
 
 
@@ -51,15 +52,20 @@ def read_template_proteome(fasta_filename):
     list
         List of protein names in order of appearance in the fasta file.
     list
-        List of protein sequences in order of appearance in the fasta file.
+        List of protein sequences lengths.
+    str
+        Full proteome sequence. All protein sequences concatenated.
     """
     protein_names = []
-    protein_sequences = []
+    protein_lengths = []
+    proteome_sequence = ""
     with open(fasta_filename, "r") as proteome_file:
         for record in SeqIO.parse(proteome_file, "fasta"):
             protein_names.append(record.id)
-            protein_sequences.append(str(record.seq))
-    return protein_names, protein_sequences
+            protein_lengths.append(len(record.seq))
+            proteome_sequence += str(record.seq)
+    assert sum(protein_lengths) == len(proteome_sequence)
+    return protein_names, protein_lengths, proteome_sequence
 
 
 def count_amino_acids(sequence, amino_acid_lst):
@@ -133,51 +139,57 @@ def shuffle_sequence(sequence):
     return "".join(shuffled_sequence)
 
 
-def create_random_protein_from_proteome(proteome_sequence, length):
+def create_random_proteins_from_proteome(proteome_sequence, length_lst):
     """Create random protein from a random proteome.
     
     Parameters
     ----------
     proteome_sequence : str
         Complete sequence of the entire proteome.
-    length : int
-        Lenght of the target protein.
+    length_lst : list
+        List of lengths of the target proteins.
     
     Returns
     -------
-    str
-        Produced protein sequence.
-    str
-        Remaining proteome sequence.
+    list
+        List of produced protein sequences.
     """
-    protein_sequence = proteome_sequence[0:length]
-    proteome_sequence = proteome_sequence[length:]
-    return protein_sequence, proteome_sequence
+    protein_sequence_lst = []
+    for length in length_lst:
+        protein_sequence = proteome_sequence[0:length]
+        proteome_sequence = proteome_sequence[length:]
+        protein_sequence_lst.append(protein_sequence)
+    return protein_sequence_lst
 
 
-def create_random_protein_from_distribution(length, amino_acid_lst, amino_acid_distribution=None):
+def create_random_proteins_from_distribution(length_lst, 
+                                             amino_acid_lst, 
+                                             amino_acid_distribution=None):
     """Create random protein from distribution.
 
     https://docs.python.org/3/library/random.html#random.choices
     
     Parameters
     ----------
-    lenght : int
-        Lenght of the target protein.
+    length_lst : list
+        List of lengths of the target proteins.
     amino_acid_lst : list
         List of amino acids to consider.
-    amino_acid_distribution : list
+    amino_acid_distribution : list, optional
         List of amino acids distribution.
         
     Returns
     -------
-    str
-        Produced protein sequence.
+    list
+        List of produced protein sequences.
     """
-    sequence = random.choices(amino_acid_lst, 
-                              weights=amino_acid_distribution,
-                              k=length)
-    return "".join(sequence)
+    protein_sequence_lst = []
+    for length in length_lst:
+        sequence = random.choices(amino_acid_lst, 
+                                  weights=amino_acid_distribution,
+                                  k=length)
+        protein_sequence_lst.append("".join(sequence))
+    return protein_sequence_lst
 
 
 def write_fasta(protein_lst, fasta_filename, width=60):
@@ -215,13 +227,17 @@ def write_distribution(protein_lst, amino_acid_lst, filename, ref_distribution=N
     ref_distribution : dict, optional
         Dictionnary with amino acid ditribution of the reference proteome.
     """
-    df  = pd.DataFrame(columns=amino_acid_lst)
+    df  = pd.DataFrame(columns=["length"]+list(amino_acid_lst))
     if ref_distribution:
+        ref_distribution["length"] = 0
         df = df.append(pd.Series(ref_distribution, name=0))
     for prot_index, prot_sequence in enumerate(protein_lst):
         proportion = get_amino_acid_proportion(prot_sequence, amino_acid_lst)
+        proportion["length"] = len(prot_sequence)
         df = df.append(pd.Series(proportion, name=prot_index+1))
+    df["length"] = df["length"].astype(int)
     df.to_csv(filename, sep="\t", index_label="prot_id")
+
 
 if "__name__" == "__main__":
     inputs = cli()
