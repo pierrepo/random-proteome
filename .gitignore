@@ -5,6 +5,9 @@
 *.tsv
 *.png
 
+# VScode
+.vscode
+
 # Jupyter checkpoints
 .ipynb_checkpoints
 
