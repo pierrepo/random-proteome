@@ -8,6 +8,7 @@ import sys
 from Bio import SeqIO
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 
 random.seed(42)
 AMINO_ACID_LST = tuple("ACDEFGHIKLMNPQRSTVWY")
@@ -155,10 +156,14 @@ def create_random_proteins_from_proteome(proteome_sequence, length_lst):
         List of produced protein sequences.
     """
     protein_sequence_lst = []
-    for length in length_lst:
-        protein_sequence = proteome_sequence[0:length]
-        proteome_sequence = proteome_sequence[length:]
-        protein_sequence_lst.append(protein_sequence)
+    with tqdm(length_lst, 
+            file=sys.stdout,
+            bar_format="{percentage:3.0f}%|{bar}|{n_fmt}/{total_fmt}") as pbar:
+        for length in length_lst:
+            protein_sequence = proteome_sequence[0:length]
+            proteome_sequence = proteome_sequence[length:]
+            protein_sequence_lst.append(protein_sequence)
+            pbar.update()
     return protein_sequence_lst
 
 
@@ -231,10 +236,14 @@ def write_distribution(protein_lst, amino_acid_lst, filename, ref_distribution=N
     if ref_distribution:
         ref_distribution["length"] = 0
         df = df.append(pd.Series(ref_distribution, name=0))
-    for prot_index, prot_sequence in enumerate(protein_lst):
-        proportion = get_amino_acid_proportion(prot_sequence, amino_acid_lst)
-        proportion["length"] = len(prot_sequence)
-        df = df.append(pd.Series(proportion, name=prot_index+1))
+    with tqdm(protein_lst, 
+            file=sys.stdout,
+            bar_format="{percentage:3.0f}%|{bar}|{n_fmt}/{total_fmt}") as pbar:
+        for prot_index, prot_sequence in enumerate(protein_lst):
+            proportion = get_amino_acid_proportion(prot_sequence, amino_acid_lst)
+            proportion["length"] = len(prot_sequence)
+            df = df.append(pd.Series(proportion, name=prot_index+1))
+            pbar.update()
     df["length"] = df["length"].astype(int)
     df.to_csv(filename, sep="\t", index_label="prot_id")
 
