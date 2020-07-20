@@ -1,5 +1,6 @@
 # Fasta files
 *.fasta
+!demo/*.fasta
 
 # result files
 *.tsv
