@@ -1,5 +1,5 @@
 {
     "VoilaConfiguration": {
-        "file_whitelist": "['.*\\.(fasta|tsv)']"
+        "file_whitelist": [".*\\.(fasta|tsv)"]
     }
 }
